@@ -1,5 +1,6 @@
 import numpy as np
 from .skeleton import Environment
+np.random.seed(0)
 
 class Gridworld(Environment):
     """
@@ -29,37 +30,133 @@ class Gridworld(Environment):
     """
 
     def __init__(self, startState=0, endState=24, shape=(5,5), obstacles=[12, 17], waterStates=[6, 18, 22]):
-        pass
+        # initialize(startState, endState, obstacles, waterStates)
+        self.name = "Gridworld"
+        self.state = startState
+        self.isEnd = (self.state == endState)
+        self.waterStates = waterStates
+        self.endState = endState
+        self.gamma = 0.9
+        self.p = self.populateP()
         
-    @property
     def name(self):
         pass
         
-    @property
     def reward(self):
         pass
 
-    @property
     def action(self):
         pass
 
-    @property
     def isEnd(self):
         pass
 
-    @property
     def state(self):
         pass
 
-    @property
     def gamma(self):
         pass
 
-    def step(self, action):
+    def waterStates(self):
         pass
 
-    def reset(self):
+    def endState(self):
         pass
+
+    def p(self):
+        pass
+        
+
+    def randomizeAction(self, action):
+        newAction = -1
+        if action == 0:
+            newAction = np.random.choice(np.array([0,2,3,5]), p = [0.8, 0.05, 0.05, 0.1])
+        if action == 1:
+            newAction = np.random.choice(np.array([1,2,3,5]), p = [0.8, 0.05, 0.05, 0.1])
+        if action == 2:
+            newAction = np.random.choice(np.array([2,0,1,5]), p = [0.8, 0.05, 0.05, 0.1])
+        if action == 3:
+            newAction = np.random.choice(np.array([3,0,1,5]), p = [0.8, 0.05, 0.05, 0.1])
+        return newAction
+
+    def populateP(self):
+        p = {}
+        #Rules for staying
+        for i in range(0,25):
+            p[(i,5)] = i
+
+
+        #Rules for moving up
+        for i in range(0,25):
+            p[i,0] = i-5
+
+        for i in range(5):
+            p[i,0] = i
+
+        p[(22,0)] = 22
+        p[(24,0)] = 24
+
+        
+
+        #Rules for moving down
+        for i in range(0,25):
+            p[i,1] = i+5
+
+        for i in range(20,25):
+            p[i,1] = i
+
+        p[(7,1)] = 7
+        p[(24,1)] = 24
+
+        
+        #Rules for moving left
+        for i in range(0,25):
+            p[i,2] = i-1
+
+        p[(0,2)] = 0
+        p[(5,2)] = 5
+        p[(10,2)] = 10
+        p[(15,2)] = 15
+        p[(20,2)] = 20
+
+        p[(13,2)] = 13
+        p[(18,2)] = 18
+
+        p[(24,2)] = 24
+
+        
+        #Rules for moving right
+        for i in range(0,25):
+            p[i,3] = i+1
+
+        p[(4,3)] = 4
+        p[(9,3)] = 9
+        p[(14,3)] = 14
+        p[(19,3)] = 19
+
+        p[(11,3)] = 11
+        p[(16,3)] = 16
+
+        p[(24,3)] = 24
+
+        return p
+
+    def step(self, action):
+        newAction = self.randomizeAction(action)
+        newState = self.p[(self.state, newAction)]
+        self.state = newState
+        if self.state == 24:
+            self.reward = 10
+            self.isEnd = True
+        elif self.state in self.waterStates:
+            self.reward = -10
+            self.isEnd = False
+        else:
+            self.reward = 0
+            self.isEnd = False      
+
+    def reset(self):
+        self.__init__()
         
     def R(self, _state):
         """
@@ -68,4 +165,9 @@ class Gridworld(Environment):
         output:
             reward -- the reward resulting in the agent being in a particular state
         """
-        pass
+        if _state in self.waterStates:
+            return -10
+        if _state == self.endState:
+            return 10
+        else:
+            return 0
